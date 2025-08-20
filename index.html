@@ -1,159 +1,578 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pace Tracker</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Task Pace Tracker — 15-Minute Cadence</title>
 <style>
-  body {
-    margin:0; padding:20px;
-    font-family:Segoe UI, sans-serif;
-    background:#0b0d1a; color:#cbd4ff;
-    display:flex; justify-content:center; align-items:flex-start;
+  :root{
+    --bg1:#0f1020; --bg2:#191b2e; --card:#14162a;
+    --txt:#e8ecff; --muted:#9aa3c7;
+    --accent:#7aa2ff; --good:#34d399; --warn:#3b82f6; --bad:#f87171;
+    --ringTrack:#1b1f43;
+    --wrap-max: 1500px; --gap: clamp(12px, 2vw, 20px);
+    --ring: clamp(200px, 28vw, 360px);
   }
-  .card {
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans,sans-serif;
+    color:var(--txt);
+    background:
+      radial-gradient(1200px 700px at 20% 10%, #1f255a55 0%, transparent 60%),
+      radial-gradient(1200px 700px at 80% 90%, #2b6dff33 0%, transparent 60%),
+      linear-gradient(135deg,var(--bg1),var(--bg2));
+    overflow-x:hidden;
+  }
+  .blob{position:fixed; pointer-events:none; filter:blur(40px); opacity:.35; mix-blend-mode:screen}
+  .blob.one{width:420px;height:420px;background:#5b7cfa;top:-100px;left:-80px;border-radius:50%;animation:float1 18s ease-in-out infinite}
+  .blob.two{width:520px;height:520px;background:#7cfacc;bottom:-160px;right:-140px;border-radius:50%;animation:float2 22s ease-in-out infinite}
+  @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px) scale(1.05)}}
+  @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,-20px) scale(1.07)}}
+
+  .wrap{max-width:var(--wrap-max); margin:0 auto; padding:clamp(16px,3vw,28px)}
+  header{display:flex; gap:var(--gap); align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:var(--gap)}
+  h1{font-size:clamp(1.1rem,1.5vw,1.6rem); font-weight:700; letter-spacing:.3px; margin:0}
+  .sub{color:var(--muted); font-size:clamp(.85rem,1.2vw,.95rem)}
+
+  .grid{display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:var(--gap)}
+  .span-4{grid-column:span 4} .span-5{grid-column:span 5} .span-6{grid-column:span 6}
+  .span-7{grid-column:span 7} .span-8{grid-column:span 8} .span-12{grid-column:span 12}
+  @media (max-width:1200px){ .span-8,.span-7,.span-6,.span-5{grid-column:span 12} }
+  @media (max-width:640px){ .span-4{grid-column:span 12} }
+
+  .card{
     background:linear-gradient(180deg,#14162ad9,#0c0d1bd9);
-    border:1px solid #232649; border-radius:16px;
-    padding:clamp(12px,2.4vw,20px);
-    overflow:visible; box-shadow:0 10px 30px #0003,inset 0 1px 0 #ffffff10;
-    max-width:800px; width:100%;
+    border:1px solid #232649; border-radius:16px; padding:clamp(12px,2.4vw,16px);
+    position:relative; overflow:visible; /* allow tooltips to escape */
+    box-shadow:0 10px 30px #0003,inset 0 1px 0 #ffffff10;
   }
-  h3 {margin:0 0 12px; font-size:1.3rem}
-  .grid {
-    display:grid; gap:14px;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  .card h3{margin:.2rem 0 .8rem; font-size:clamp(.9rem,1.2vw,1rem); color:#cdd5ff; font-weight:600}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .field{display:flex; flex-direction:column; gap:6px; min-width:150px}
+  .field label{font-size:clamp(.72rem,1vw,.82rem); color:var(--muted)}
+  .field input, .field select{
+    background:#0e1122; color:var(--txt); border:1px solid #2a2f57; border-radius:10px;
+    padding:10px 12px; font-size:clamp(.95rem,1.2vw,1rem); outline:none; min-height:40px;
   }
-  .field {display:flex; flex-direction:column; gap:4px}
-  .label {font-size:.85rem; color:#96a2da; display:flex; align-items:center; gap:4px}
-  .value {font-size:1.2rem; font-weight:600}
-  .info {position:relative; cursor:pointer}
+  .field input:focus{border-color:#3b82f6; box-shadow:0 0 0 3px #3b82f633}
+
+  .btn{
+    background:#1a2043; color:#dfe7ff; border:1px solid #2a2f57; padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer;
+    transition:transform .1s ease, background .2s ease, border-color .2s ease; font-size:clamp(.9rem,1.1vw,1rem);
+  }
+  .btn:hover{transform:translateY(-1px); background:#20265a; border-color:#3b82f6}
+  .btn:active{transform:translateY(0)}
+  .btn.primary{background:linear-gradient(180deg,#3453ff,#2436b8); border-color:#3b82f6}
+  .btn.ghost{background:#0e1122}
+  .btn.flat{background:#101431}
+
+  .big{font-size:clamp(1.6rem,2.2vw,2.2rem); font-weight:800; letter-spacing:.5px}
+  .muted{color:var(--muted)}
+  .stat{display:flex; align-items:flex-end; justify-content:space-between; gap:10px; flex-wrap:wrap}
+
+  /* info tip (auto-positioned) */
+  .info{position:relative; display:inline-flex; align-items:center; gap:6px}
   .info:hover .tip{opacity:1; transform:translateY(-6px); pointer-events:auto}
-  .tip {
+  .tip{
     position:absolute; bottom:140%; left:50%; transform:translate(-50%,0);
     background:#0d1124; border:1px solid #202548; color:#cbd4ff;
-    font-size:.78rem; padding:8px 10px; border-radius:8px;
-    max-width:min(70vw,320px); white-space:normal; opacity:0;
-    transition:all .15s ease; z-index:9999; pointer-events:none;
+    font-size:.78rem; padding:8px 10px; border-radius:8px; box-shadow:0 8px 20px #0008;
+    max-width:min(70vw,320px); white-space:normal; opacity:0; transition:all .15s ease; z-index:9999; pointer-events:none;
   }
-  .tip.bottom {bottom:auto; top:140%}
+  .tip.bottom{bottom:auto; top:140%}
   .tip.align-right{left:auto; right:0; transform:translateY(-6px)}
   .tip.align-left{left:0; transform:translateY(-6px)}
-  .controls {margin-top:16px; display:flex; flex-wrap:wrap; gap:12px}
-  input[type="time"]{background:#0d1124; border:1px solid #202548; color:#cbd4ff; padding:4px 8px; border-radius:6px}
-  button {
-    background:#202548; border:1px solid #2e3358;
-    color:#cbd4ff; padding:6px 12px; border-radius:6px; cursor:pointer;
-  }
-  button:hover{background:#2e3358}
+
+  /* progress ring */
+  .ring{width:var(--ring); height:var(--ring); margin:auto; position:relative}
+  .ring svg{width:100%; height:100%; transform:rotate(-90deg)}
+  .ring .center{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px}
+  .ring .pct{font-size:clamp(1.4rem,2.4vw,2rem); font-weight:800}
+  .ring .desc{color:var(--muted); font-size:clamp(.85rem,1.2vw,.95rem)}
+
+  .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; font-weight:700; font-size:.85rem; border:1px solid transparent}
+  .ahead{background:#063e2a; color:#b5ffe5; border-color:#2bb483}
+  .ontime{background:#0b173c; color:#d3e2ff; border-color:#3b82f6}
+  .behind{background:#3f0b0b; color:#ffd4d4; border-color:#f87171}
+
+  .pop{animation:pop .25s ease}
+  @keyframes pop{0%{transform:scale(.9); opacity:.8}100%{transform:scale(1); opacity:1}}
+
+  #confetti{position:fixed; inset:0; pointer-events:none}
+  #etaPlan, #etaCurrent { white-space: nowrap; } /* keep 24h time on one line */
 </style>
 </head>
 <body>
-  <div class="card">
-    <h3>Snapshot</h3>
+  <canvas id="confetti"></canvas>
+  <div class="blob one"></div><div class="blob two"></div>
+
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Task Pace Tracker</h1>
+        <div class="sub">Default day <b>08:00 → 17:00</b> (9h). Cadence <b>15 min/task</b>. Lunch excluded when logged.</div>
+      </div>
+      <div class="row">
+        <button class="btn ghost" id="resetBtn" title="Reset all">Reset</button>
+        <button class="btn primary" id="saveBtn" title="Save to browser">Save</button>
+      </div>
+    </header>
+
     <div class="grid">
-      <div class="field"><div class="label">Tasks to go</div><div class="value" id="tasks">32</div></div>
-      <div class="field info">
-        <div class="label">Target time for completed ⓘ
-          <div class="tip">The exact time all tasks should be done if on target pace.</div>
+      <!-- Plan -->
+      <section class="card span-8">
+        <h3>Plan</h3>
+        <div class="row">
+          <div class="field">
+            <label>Start time (24h)</label>
+            <input id="startTime" type="time" value="08:00" />
+          </div>
+          <div class="field">
+            <label>End time (24h)</label>
+            <input id="endTime" type="time" value="17:00" />
+          </div>
+          <div class="field">
+            <label>Minutes per task</label>
+            <input id="mpt" type="number" min="1" max="240" step="1" value="15" />
+          </div>
+          <div class="field">
+            <label>Pace tolerance (±%) <span class="info">ⓘ
+              <span class="tip">Blue = within tolerance of plan; Green = faster; Red = slower.</span>
+            </span></label>
+            <input id="tolPct" type="number" min="1" max="50" step="1" value="5" />
+          </div>
+          <div class="field">
+            <label>Total tasks (auto)</label>
+            <input id="totalTasks" type="number" min="1" step="1" value="36" />
+          </div>
+          <div class="field">
+            <label>Total minutes (net)</label>
+            <input id="totalMin" type="text" value="540" disabled />
+          </div>
+          <div class="field">
+            <label>Lunch logged</label>
+            <input id="lunchUsed" type="text" value="00:00" disabled />
+          </div>
         </div>
-        <div class="value" id="target">00:00</div>
-      </div>
-      <div class="field"><div class="label">Ahead / Behind</div><div class="value" id="pace">On time</div></div>
-      <div class="field info">
-        <div class="label">Should have used by now ⓘ
-          <div class="tip">Amount of working time expected to be spent so far.</div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="recalcBtn">Recalculate</button>
+          <button class="btn flat" id="lunchBtn">Start Lunch</button>
+          <span class="muted">Lunch time is excluded from available minutes and ETAs.</span>
         </div>
-        <div class="value" id="used">00:00</div>
-      </div>
-      <div class="field"><div class="label">Over/Under used (Δ)</div><div class="value" id="delta">±00:00</div></div>
-      <div class="field info">
-        <div class="label">ETA (plan pace) ⓘ
-          <div class="tip">Estimated finish time if tasks follow planned pace.</div>
+      </section>
+
+      <!-- Progress Ring -->
+      <section class="card span-4">
+        <div class="ring" aria-label="progress">
+          <svg viewBox="0 0 220 220" preserveAspectRatio="xMidYMid meet">
+            <circle cx="110" cy="110" r="94" stroke="var(--ringTrack)" stroke-width="20" fill="none"/>
+            <circle id="ring" cx="110" cy="110" r="94" stroke="var(--warn)" stroke-width="20" stroke-linecap="round" fill="none"
+                    stroke-dasharray="590" stroke-dashoffset="590"/>
+          </svg>
+          <div class="center">
+            <div class="pct" id="pct">0%</div>
+            <div class="desc"><span id="done">0</span> / <span id="goal">36</span> tasks</div>
+          </div>
         </div>
-        <div class="value" id="etaPlan">00:00</div>
-      </div>
-      <div class="field info">
-        <div class="label">ETA (current pace) ⓘ
-          <div class="tip">Estimated finish time based on current speed.</div>
+      </section>
+
+      <!-- Controls -->
+      <section class="card span-8">
+        <h3>Controls</h3>
+        <div class="row">
+          <button class="btn" id="minusBtn">– 1</button>
+          <button class="btn primary" id="plusBtn">+ 1</button>
+          <button class="btn" id="addCustomBtn">+ N</button>
+          <input id="addCustom" type="number" min="1" value="5" style="width:90px; background:#0e1122; color:var(--txt); border:1px solid #2a2f57; border-radius:10px; padding:10px 12px; margin-left:6px">
+          <span class="muted">Quick-add tasks</span>
         </div>
-        <div class="value" id="etaCurrent">00:00</div>
-      </div>
-    </div>
-    <div class="controls">
-      <label>Start: <input type="time" id="startTime" value="08:00"></label>
-      <label>End: <input type="time" id="endTime" value="17:00"></label>
-      <button id="lunchBtn">Lunch ✓</button>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="startStopBtn">Start Timer</button>
+          <button class="btn ghost" id="lapBtn">Log Lap</button>
+          <span class="muted">Elapsed (work): <b id="elapsed" title="Click to set manually">00:00:00</b></span>
+          <span class="muted">Lunch (today): <b id="lunchElapsed">00:00:00</b></span>
+        </div>
+      </section>
+
+      <!-- Snapshot -->
+      <section class="card span-4">
+        <h3>Snapshot</h3>
+        <div class="stat">
+          <div>
+            <div class="muted">Tasks to go</div>
+            <div class="big" id="toGo">36</div>
+          </div>
+          <div class="pill ontime" id="paceTag">Pace: On time</div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="muted">
+              Target time for completed <span class="info">ⓘ
+                <span class="tip">Done × minutes per task (plan)</span>
+              </span>
+            </div>
+            <div class="big" id="targetTime">00:00</div>
+          </div>
+          <div>
+            <div class="muted">
+              Ahead / Behind <span class="info">ⓘ
+                <span class="tip">Elapsed vs Target. Also shows % vs plan.</span>
+              </span>
+            </div>
+            <div class="big" id="aheadBehind">On time</div>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="muted">Over/Under used (Δ) <span class="info">ⓘ
+              <span class="tip">Δ = Elapsed − Target (positive = over)</span>
+            </span></div>
+            <div class="big" id="overUnder">±00:00</div>
+          </div>
+          <div>
+            <div class="muted">Avg / Task <span class="info">ⓘ
+              <span class="tip">Your current average vs plan</span>
+            </span></div>
+            <div class="big" id="avgPerTask">—</div>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div>
+            <div class="muted">ETA (plan pace)</div>
+            <div class="big" id="etaPlan">—</div>
+          </div>
+          <div>
+            <div class="muted">ETA (current pace)</div>
+            <div class="big" id="etaCurrent">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Laps -->
+      <section class="card span-12">
+        <h3>Laps / Notes</h3>
+        <div class="row">
+          <div class="field" style="min-width:220px">
+            <label for="note">Note (optional)</label>
+            <input id="note" placeholder="What did you just complete?">
+          </div>
+          <button class="btn" id="addNoteBtn">Add Note</button>
+        </div>
+        <div id="laps" class="muted" style="margin-top:12px">No laps yet.</div>
+      </section>
     </div>
   </div>
 
 <script>
 (function(){
-  const startInput=document.getElementById('startTime');
-  const endInput=document.getElementById('endTime');
-  const lunchBtn=document.getElementById('lunchBtn');
-  let lunchDone=false;
+  // ---- State ----
+  const state = {
+    mpt: 15,
+    tolPct: 5,               // ±% tolerance for on-time
+    startTime: "08:00",
+    endTime:   "17:00",
+    totalTasks: 36,
+    done: 0,
+    elapsedSec: 0,           // work time only
+    running: false,
+    lastTick: null,
 
-  lunchBtn.addEventListener('click',()=>{
-    lunchDone=!lunchDone;
-    lunchBtn.textContent = lunchDone ? "Lunch ✔️" : "Lunch ✓";
-  });
+    // lunch tracking
+    lunchRunning: false,
+    lunchStartMs: null,
+    lunchSec: 0,
 
-  function update(){
-    const now=new Date();
-    const start=parseTime(startInput.value);
-    const end=parseTime(endInput.value);
-    const totalMs=end-start - (lunchDone?3600000:0); // subtract 1h if lunch taken
-    const elapsed=now-start;
-    const percentUsed=Math.max(0,Math.min(1,elapsed/totalMs));
-    const usedMinutes=Math.floor(totalMs/60000*percentUsed);
+    laps: []
+  };
 
-    document.getElementById('tasks').textContent="32"; // static placeholder
-    document.getElementById('used').textContent=formatHM(usedMinutes);
-    document.getElementById('delta').textContent="±00:00";
+  // ---- Elements ----
+  const el = {
+    startTime: q('#startTime'), endTime: q('#endTime'),
+    mpt: q('#mpt'), tolPct: q('#tolPct'),
+    totalTasks: q('#totalTasks'), totalMin: q('#totalMin'),
+    lunchUsed: q('#lunchUsed'), lunchBtn: q('#lunchBtn'),
+    ring: q('#ring'), pct: q('#pct'), done: q('#done'), goal: q('#goal'),
+    minusBtn: q('#minusBtn'), plusBtn: q('#plusBtn'), addCustomBtn: q('#addCustomBtn'), addCustom: q('#addCustom'),
+    startStopBtn: q('#startStopBtn'), lapBtn: q('#lapBtn'),
+    elapsed: q('#elapsed'), lunchElapsed: q('#lunchElapsed'),
+    toGo: q('#toGo'), targetTime: q('#targetTime'), aheadBehind: q('#aheadBehind'),
+    overUnder: q('#overUnder'), avgPerTask: q('#avgPerTask'),
+    paceTag: q('#paceTag'), etaPlan: q('#etaPlan'), etaCurrent: q('#etaCurrent'),
+    note: q('#note'), addNoteBtn: q('#addNoteBtn'), laps: q('#laps'),
+    recalcBtn: q('#recalcBtn'), saveBtn: q('#saveBtn'), resetBtn: q('#resetBtn'),
+    confetti: document.getElementById('confetti')
+  };
 
-    const etaPlan=new Date(start.getTime()+totalMs);
-    const etaCurrent=new Date(now.getTime()+(1-percentUsed)*totalMs);
-    document.getElementById('etaPlan').textContent=formatClock(etaPlan);
-    document.getElementById('etaCurrent').textContent=formatClock(etaCurrent);
+  function q(s){return document.querySelector(s)}
+  const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
+  const pad=n=>String(n).padStart(2,'0');
+  const fmtHM = m => `${pad(Math.floor(m/60))}:${pad(Math.floor(m%60))}`;
+  const fmtHMS = s => { s=Math.floor(s); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60); return `${pad(h)}:${pad(m)}:${pad(ss)}`; }
+  const parseHMS = str => { const m=/^(\d{1,2}):([0-5]\d):([0-5]\d)$/.exec(str?.trim()||""); return m?((+m[1])*3600+(+m[2])*60+(+m[3])):null; }
 
-    requestAnimationFrame(update);
+  // ---- Confetti ----
+  const ctx = el.confetti.getContext('2d');
+  function sizeCanvas(){ el.confetti.width=innerWidth; el.confetti.height=innerHeight; }
+  addEventListener('resize', sizeCanvas); sizeCanvas();
+  function confetti(){
+    const W=el.confetti.width,H=el.confetti.height;
+    const bits=Array.from({length:180}).map(()=>({x:Math.random()*W,y:-20-Math.random()*H*.2,vx:(Math.random()-.5)*3,vy:2+Math.random()*3,w:6+Math.random()*6,h:12+Math.random()*16,r:Math.random()*360,vr:(Math.random()-.5)*8,c:Math.random()>.5?'#34d399':'#3b82f6'}));
+    let t=0,id;(function tick(){id=requestAnimationFrame(tick);t++;ctx.clearRect(0,0,W,H);for(const p of bits){p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();}if(t>300){cancelAnimationFrame(id);ctx.clearRect(0,0,W,H);} })();
   }
-  function parseTime(str){
-    const [h,m]=str.split(':').map(Number);
-    const d=new Date(); d.setHours(h,m,0,0); return d;
-  }
-  function formatHM(mins){
-    const h=Math.floor(mins/60), m=mins%60;
-    return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
-  }
-  function formatClock(d){
-    const h=d.getHours().toString().padStart(2,'0');
-    const m=d.getMinutes().toString().padStart(2,'0');
-    const s=d.getSeconds().toString().padStart(2,'0');
-    return `${h}:${m}:${s}`;
-  }
 
-  // Tooltip auto-position
+  // ---- Tooltip auto-positioning (no clipping) ----
   function positionTip(infoEl){
-    const tip=infoEl.querySelector('.tip'); if(!tip) return;
+    const tip = infoEl.querySelector('.tip');
+    if(!tip) return;
     tip.classList.remove('bottom','align-right','align-left');
-    tip.style.opacity=0; tip.style.visibility='hidden';
-    const tipRect=tip.getBoundingClientRect();
-    const vw=window.innerWidth;
-    if(tipRect.right>vw-8) tip.classList.add('align-right');
-    if(tipRect.left<8) tip.classList.add('align-left');
-    if(tipRect.top<8) tip.classList.add('bottom');
-    tip.style.opacity=''; tip.style.visibility='';
+    // temporarily show to measure
+    tip.style.opacity = 0;
+    tip.style.visibility = 'hidden';
+    const tipRect = tip.getBoundingClientRect();
+    const vw = window.innerWidth;
+    if (tipRect.right > vw - 8) tip.classList.add('align-right');
+    if (tipRect.left < 8) tip.classList.add('align-left');
+    const tipRect2 = tip.getBoundingClientRect();
+    if (tipRect2.top < 8) tip.classList.add('bottom');
+    tip.style.opacity = ''; tip.style.visibility = '';
   }
-  document.querySelectorAll('.info').forEach(info=>{
-    info.addEventListener('mouseenter',()=>positionTip(info));
-    info.addEventListener('mousemove',()=>positionTip(info));
-  });
-  window.addEventListener('resize',()=>{
-    document.querySelectorAll('.info:hover').forEach(positionTip);
+  function wireTooltips(){
+    document.querySelectorAll('.info').forEach(info=>{
+      info.addEventListener('mouseenter', ()=>positionTip(info));
+      info.addEventListener('mousemove',  ()=>positionTip(info));
+    });
+    window.addEventListener('resize', ()=>{
+      document.querySelectorAll('.info:hover').forEach(positionTip);
+    });
+  }
+
+  // ---- Time helpers ----
+  function minutesBetween(startStr,endStr){
+    const [sh,sm]=startStr.split(':').map(Number), [eh,em]=endStr.split(':').map(Number);
+    let start = new Date(); start.setHours(sh,sm,0,0);
+    let end   = new Date(); end.setHours(eh,em,0,0);
+    if(end<start) end.setDate(end.getDate()+1); // wrap after midnight if needed
+    return Math.round((end-start)/60000);
+  }
+  function netAvailableMinutes(){
+    const gross = minutesBetween(state.startTime, state.endTime);
+    return Math.max(0, gross - Math.round(state.lunchSec/60));
+  }
+
+  // ---- Recalc totals ----
+  function recalcTotals(keepTasks=false){
+    state.mpt = clamp(Math.round(+el.mpt.value || 15), 1, 240);
+    state.tolPct = clamp(Math.round(+el.tolPct.value || 5), 1, 50);
+    state.startTime = el.startTime.value || "08:00";
+    state.endTime   = el.endTime.value || "17:00";
+    const totalMinutes = netAvailableMinutes();
+    el.totalMin.value = totalMinutes;
+    el.lunchUsed.value = fmtHM(Math.round(state.lunchSec/60));
+
+    if(!keepTasks){
+      state.totalTasks = Math.max(1, Math.floor(totalMinutes / state.mpt));
+      el.totalTasks.value = state.totalTasks;
+    } else {
+      state.totalTasks = Math.max(1, Math.floor(+el.totalTasks.value || 1));
+    }
+    el.goal.textContent = state.totalTasks;
+    updateUI();
+  }
+
+  // ---- Progress ring & pace ----
+  function updateRing(){
+    const circumference = 2*Math.PI*94;
+    const pct = clamp(state.done/state.totalTasks,0,1);
+    const target = circumference*(1-pct);
+    const current = +el.ring.getAttribute('data-off') || circumference;
+    const next = current + (target - current)*0.18;
+    el.ring.style.strokeDasharray = `${circumference}`;
+    el.ring.style.strokeDashoffset = `${next}`;
+    el.ring.setAttribute('data-off', next);
+    el.pct.textContent = `${Math.round(pct*100)}%`;
+  }
+  function paceInfo(){
+    const planPerTaskSec = state.mpt*60;
+    const actualPerTaskSec = state.done>0 ? (state.elapsedSec/state.done) : planPerTaskSec;
+    const ratio = actualPerTaskSec/planPerTaskSec; // 1.00 = on plan
+    const tol = state.tolPct/100;
+    if(ratio <= (1 - tol)) return {cls:'ahead', color:'var(--good)', label:'Pace: Ahead', ratio};
+    if(ratio >= (1 + tol)) return {cls:'behind', color:'var(--bad)',  label:'Pace: Behind', ratio};
+    return {cls:'ontime', color:'var(--warn)', label:'Pace: On time', ratio};
+  }
+
+  // ---- Derived stats ----
+  function updateStats(){
+    const targetForCompletedMin = state.done * state.mpt;
+    const targetSec = targetForCompletedMin * 60;
+    const elapsed = Math.floor(state.elapsedSec);
+
+    el.targetTime.textContent = fmtHM(targetForCompletedMin);
+
+    const deltaSec = elapsed - targetSec;
+    const absMin = Math.round(Math.abs(deltaSec)/60);
+    const sign = deltaSec===0 ? '±' : (deltaSec>0?'+':'−');
+    el.overUnder.textContent = `${sign}${fmtHM(absMin)}`;
+
+    const pctDelta = targetSec>0 ? Math.round((deltaSec/targetSec)*100) : 0;
+    if(deltaSec < -60){ el.aheadBehind.textContent = `Ahead by ${fmtHM(Math.round((-deltaSec)/60))} (${Math.abs(pctDelta)}%)`; }
+    else if(deltaSec > 60){ el.aheadBehind.textContent = `Behind by ${fmtHM(Math.round((deltaSec)/60))} (${pctDelta}%)`; }
+    else { el.aheadBehind.textContent = 'On time'; }
+
+    // Avg per task
+    const planPerTaskSec = state.mpt*60;
+    const actualPerTaskSec = state.done>0 ? (elapsed/state.done) : planPerTaskSec;
+    const avgTxt = `${fmtHM(Math.round(actualPerTaskSec/60))} (${Math.round((actualPerTaskSec/planPerTaskSec)*100)}%)`;
+    el.avgPerTask.textContent = avgTxt;
+
+    // ETAs (24h display)
+    const remainingTasks = Math.max(0, state.totalTasks - state.done);
+    const nowMs = Date.now();
+    const planMs   = remainingTasks * planPerTaskSec * 1000 + nowMs;
+    const actualMs = remainingTasks * Math.max(1, actualPerTaskSec) * 1000 + nowMs;
+    el.etaPlan.textContent = state.done>=state.totalTasks ? 'Done' : new Date(planMs).toLocaleTimeString([], {hour12:false});
+    el.etaCurrent.textContent = state.done>=state.totalTasks ? 'Done' : new Date(actualMs).toLocaleTimeString([], {hour12:false});
+  }
+  function applyPaceStyling(){
+    const {cls,color,label} = paceInfo();
+    el.paceTag.className = `pill ${cls}`;
+    el.paceTag.textContent = label;
+    el.ring.style.stroke = color;
+  }
+  function updateUI(){
+    el.done.textContent = state.done;
+    el.goal.textContent = state.totalTasks;
+    el.toGo.textContent = Math.max(0, state.totalTasks - state.done);
+    el.elapsed.textContent = fmtHMS(state.elapsedSec);
+    el.lunchElapsed.textContent = fmtHMS(state.lunchSec);
+    el.totalTasks.value = state.totalTasks;
+
+    updateRing();
+    updateStats();
+    applyPaceStyling();
+    if(state.done>=state.totalTasks) confetti();
+  }
+
+  // ---- Work timer ----
+  function tick(){
+    if(!state.running) return;
+    const now = performance.now();
+    if(state.lastTick!=null){
+      const diff = (now - state.lastTick)/1000;
+      state.elapsedSec += diff;
+      if((state.elapsedSec|0) !== ((state.elapsedSec-diff)|0)){
+        el.elapsed.textContent = fmtHMS(state.elapsedSec);
+        updateStats(); applyPaceStyling();
+      }
+    }
+    state.lastTick = now;
+    requestAnimationFrame(tick);
+  }
+  function startTimer(){ if(state.running) return; state.running=true; state.lastTick=performance.now(); el.startStopBtn.textContent='Pause Timer'; tick(); }
+  function stopTimer(){ state.running=false; state.lastTick=null; el.startStopBtn.textContent='Start Timer'; }
+
+  // ---- Lunch timer (excludes from available minutes) ----
+  let lunchRAF=null;
+  function lunchTick(){
+    if(!state.lunchRunning) return;
+    const now = Date.now();
+    const sec = Math.floor((now - state.lunchStartMs)/1000);
+    el.lunchElapsed.textContent = fmtHMS(state.lunchSec + sec);
+    lunchRAF = requestAnimationFrame(lunchTick);
+  }
+  function startLunch(){
+    if(state.lunchRunning) return;
+    if(state.running) stopTimer(); // pause work timer
+    state.lunchRunning = true;
+    state.lunchStartMs = Date.now();
+    el.lunchBtn.textContent = 'End Lunch';
+    lunchTick();
+  }
+  function endLunch(){
+    if(!state.lunchRunning) return;
+    cancelAnimationFrame(lunchRAF);
+    const gained = Math.max(0, Math.floor((Date.now() - state.lunchStartMs)/1000));
+    state.lunchSec += gained;
+    state.lunchRunning = false;
+    state.lunchStartMs = null;
+    el.lunchBtn.textContent = 'Start Lunch';
+    recalcTotals(true); // recompute available minutes & tasks (keep manual override if set)
+  }
+
+  // ---- Laps ----
+  function addLap(note){
+    state.laps.unshift({ts:new Date().toLocaleString([], {hour12:false}), tasks: state.done, elapsed: fmtHMS(state.elapsedSec), note:escapeHtml(note||'')});
+    renderLaps();
+    el.laps.classList.add('pop'); setTimeout(()=>el.laps.classList.remove('pop'),180);
+  }
+  function renderLaps(){
+    if(state.laps.length===0){ el.laps.textContent='No laps yet.'; return; }
+    el.laps.innerHTML = state.laps.map(l=>`
+      <div style="display:flex; gap:10px; align-items:baseline; border-bottom:1px dashed #2a2f57; padding:6px 0; flex-wrap:wrap">
+        <div style="min-width:160px; color:#aab4e8">${l.ts}</div>
+        <div style="min-width:90px">Tasks: <b>${l.tasks}</b></div>
+        <div style="min-width:110px">Elapsed: <b>${l.elapsed}</b></div>
+        <div style="color:#dfe7ff">${l.note||'<span class="muted">—</span>'}</div>
+      </div>
+    `).join('');
+  }
+  const escapeHtml = s=>s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+
+  // ---- Save / Load ----
+  function save(){ const data={...state, elapsedSec:Math.floor(state.elapsedSec)}; localStorage.setItem('taskPaceTracker', JSON.stringify(data)); }
+  function load(){
+    const raw = localStorage.getItem('taskPaceTracker'); if(!raw) return;
+    try{
+      Object.assign(state, JSON.parse(raw));
+      el.startTime.value = state.startTime; el.endTime.value = state.endTime;
+      el.mpt.value = state.mpt; el.tolPct.value = state.tolPct;
+      el.totalTasks.value = state.totalTasks;
+      el.lunchElapsed.textContent = fmtHMS(state.lunchSec);
+    }catch(e){ console.warn('Failed to load state', e); }
+  }
+
+  // ---- Events ----
+  el.recalcBtn.addEventListener('click', ()=>recalcTotals(false));
+  el.mpt.addEventListener('change', ()=>recalcTotals(false));
+  el.tolPct.addEventListener('change', ()=>recalcTotals(false));
+  el.totalTasks.addEventListener('change', ()=>recalcTotals(true));
+  el.startTime.addEventListener('change', ()=>recalcTotals(true));
+  el.endTime.addEventListener('change', ()=>recalcTotals(true));
+
+  el.plusBtn.addEventListener('click', ()=>{ state.done=clamp(state.done+1,0,999999); updateUI(); });
+  el.minusBtn.addEventListener('click', ()=>{ state.done=clamp(state.done-1,0,999999); updateUI(); });
+  el.addCustomBtn.addEventListener('click', ()=>{ const n=clamp(Math.floor(+el.addCustom.value||0),1,100000); state.done=clamp(state.done+n,0,999999); updateUI(); });
+
+  el.startStopBtn.addEventListener('click', ()=> state.running ? stopTimer() : startTimer());
+  el.lapBtn.addEventListener('click', ()=> addLap(`Lap at ${state.done} tasks`));
+  el.elapsed.addEventListener('click', ()=>{ const v=prompt("Set elapsed work time (HH:MM:SS):", fmtHMS(state.elapsedSec)); const s=parseHMS(v); if(s!=null){ state.elapsedSec=s; updateUI(); } });
+
+  el.lunchBtn.addEventListener('click', ()=> state.lunchRunning ? endLunch() : startLunch());
+
+  el.saveBtn.addEventListener('click', ()=>{ save(); el.saveBtn.textContent='Saved'; setTimeout(()=>el.saveBtn.textContent='Save', 900); });
+  el.resetBtn.addEventListener('click', ()=>{ if(!confirm('Reset everything?')) return;
+    if(state.lunchRunning) endLunch();
+    Object.assign(state,{
+      mpt:15, tolPct:5, startTime:"08:00", endTime:"17:00",
+      totalTasks:36, done:0, elapsedSec:0, running:false, lastTick:null,
+      lunchRunning:false, lunchStartMs:null, lunchSec:0, laps:[]
+    });
+    el.startTime.value="08:00"; el.endTime.value="17:00"; el.mpt.value=15; el.tolPct.value=5; el.totalTasks.value=36;
+    localStorage.removeItem('taskPaceTracker'); recalcTotals(false); renderLaps();
   });
 
-  update();
+  // ---- Init ----
+  function init(){
+    wireTooltips();
+    load();
+    recalcTotals(false);
+    renderLaps();
+  }
+  init();
 })();
 </script>
 </body>
