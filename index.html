@@ -10,67 +10,97 @@
     --txt:#e8ecff; --muted:#9aa3c7;
     --accent:#7aa2ff; --good:#34d399; --warn:#3b82f6; --bad:#f87171;
     --ringTrack:#1b1f43;
+
+    /* Responsive sizing */
+    --wrap-max: 1500px;
+    --gap: clamp(12px, 2vw, 20px);
+    --ring: clamp(200px, 28vw, 360px); /* auto-scales with viewport */
+    --radius: 94; /* SVG r, leave as-is */
   }
+
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-    color:var(--txt); background:radial-gradient(1200px 700px at 20% 10%, #1f255a55 0%, transparent 60%),
-      radial-gradient(1200px 700px at 80% 90%, #2b6dff33 0%, transparent 60%), linear-gradient(135deg,var(--bg1),var(--bg2));
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+    color:var(--txt);
+    background:
+      radial-gradient(1200px 700px at 20% 10%, #1f255a55 0%, transparent 60%),
+      radial-gradient(1200px 700px at 80% 90%, #2b6dff33 0%, transparent 60%),
+      linear-gradient(135deg,var(--bg1),var(--bg2));
     overflow-x:hidden;
   }
 
-  /* subtle blobs */
   .blob{position:fixed; inset:auto; pointer-events:none; filter:blur(40px); opacity:.35; mix-blend-mode:screen}
   .blob.one{width:420px; height:420px; background:#5b7cfa; top:-100px; left:-80px; border-radius:50%; animation:float1 18s ease-in-out infinite}
   .blob.two{width:520px; height:520px; background:#7cfacc; bottom:-160px; right:-140px; border-radius:50%; animation:float2 22s ease-in-out infinite}
   @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px) scale(1.05)}}
   @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-40px,-20px) scale(1.07)}}
 
-  .wrap{max-width:1100px; margin:0 auto; padding:28px}
-  header{display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:16px}
-  h1{font-size:1.35rem; font-weight:700; letter-spacing:.3px; margin:0}
-  .sub{color:var(--muted); font-size:.9rem}
+  .wrap{max-width:var(--wrap-max); margin:0 auto; padding:clamp(16px, 3vw, 28px)}
+  header{display:flex; gap:var(--gap); align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:var(--gap)}
+  h1{font-size:clamp(1.1rem, 1.5vw, 1.6rem); font-weight:700; letter-spacing:.3px; margin:0}
+  .sub{color:var(--muted); font-size:clamp(.85rem, 1.2vw, .95rem)}
 
-  .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:16px}
+  /* NEW grid: uses auto-fit to avoid dead space */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(12, minmax(0,1fr));
+    gap:var(--gap);
+  }
+  /* On XL screens, give left 7/12, right 5/12 still, but allow full bleed when narrow */
+  .span-4{grid-column:span 4} .span-5{grid-column:span 5} .span-6{grid-column:span 6}
+  .span-7{grid-column:span 7} .span-8{grid-column:span 8} .span-12{grid-column:span 12}
+
+  @media (max-width:1200px){
+    .span-8,.span-7,.span-6,.span-5{grid-column:span 12}
+  }
+  @media (max-width:640px){
+    .span-4{grid-column:span 12}
+  }
+
   .card{
     background:linear-gradient(180deg, #14162ad9, #0c0d1bd9);
-    border:1px solid #232649; border-radius:16px; padding:16px; position:relative; overflow:hidden;
+    border:1px solid #232649; border-radius:16px; padding:clamp(12px, 2.4vw, 16px);
+    position:relative; overflow:hidden;
     box-shadow: 0 10px 30px #0003, inset 0 1px 0 #ffffff10;
   }
-  .card h3{margin:.2rem 0 .8rem; font-size:.95rem; color:#cdd5ff; font-weight:600}
+  .card h3{margin:.2rem 0 .8rem; font-size:clamp(.9rem, 1.2vw, 1rem); color:#cdd5ff; font-weight:600}
   .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-  .field{display:flex; flex-direction:column; gap:6px; min-width:140px}
-  .field label{font-size:.78rem; color:var(--muted)}
-  .field input{background:#0e1122; color:var(--txt); border:1px solid #2a2f57; border-radius:10px; padding:10px 12px; font-size:.98rem; outline:none}
+  .field{display:flex; flex-direction:column; gap:6px; min-width:160px}
+  .field label{font-size:clamp(.72rem, 1vw, .82rem); color:var(--muted)}
+  .field input{
+    background:#0e1122; color:var(--txt); border:1px solid #2a2f57; border-radius:10px;
+    padding:10px 12px; font-size:clamp(.95rem, 1.2vw, 1rem); outline:none; min-height:40px;
+  }
   .field input:focus{border-color:#3b82f6; box-shadow:0 0 0 3px #3b82f633}
 
   .btn{
     background:#1a2043; color:#dfe7ff; border:1px solid #2a2f57; padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer;
-    transition:transform .1s ease, background .2s ease, border-color .2s ease;
+    transition:transform .1s ease, background .2s ease, border-color .2s ease; font-size:clamp(.9rem, 1.1vw, 1rem);
   }
   .btn:hover{transform:translateY(-1px); background:#20265a; border-color:#3b82f6}
   .btn:active{transform:translateY(0)}
   .btn.primary{background:linear-gradient(180deg,#3453ff,#2436b8); border-color:#3b82f6}
   .btn.ghost{background:#0e1122}
 
-  .big{font-size:2.2rem; font-weight:800; letter-spacing:.5px}
+  .big{font-size:clamp(1.6rem, 2.2vw, 2.2rem); font-weight:800; letter-spacing:.5px}
   .muted{color:var(--muted)}
-  .stat{display:flex; align-items:flex-end; justify-content:space-between; gap:10px}
+  .stat{display:flex; align-items:flex-end; justify-content:space-between; gap:10px; flex-wrap:wrap} /* allow wrap instead of cut */
 
-  /* info tip */
+  /* info tip: allow wrapping, prevent clipping off-screen */
   .info{display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%;
         background:#0d1124; border:1px solid #202548; color:#aab4e8; font-size:.75rem; cursor:default; position:relative}
   .info:hover .tip{opacity:1; transform:translateY(-6px); pointer-events:auto}
   .tip{position:absolute; bottom:140%; left:50%; transform:translate(-50%,0); background:#0d1124; border:1px solid #202548;
-       color:#cbd4ff; font-size:.78rem; padding:8px 10px; border-radius:8px; white-space:nowrap; opacity:0; transition:all .15s ease}
+       color:#cbd4ff; font-size:.78rem; padding:8px 10px; border-radius:8px; max-width:min(70vw, 280px); white-space:normal; opacity:0; transition:all .15s ease; z-index:5}
 
-  /* progress ring */
-  .ring{width:220px; height:220px; margin:auto; position:relative}
-  .ring svg{transform:rotate(-90deg)}
+  /* progress ring: auto size with --ring */
+  .ring{width:var(--ring); height:var(--ring); margin:auto; position:relative}
+  .ring svg{width:100%; height:100%; transform:rotate(-90deg)}
   .ring .center{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px}
-  .ring .pct{font-size:2rem; font-weight:800}
-  .ring .desc{color:var(--muted); font-size:.9rem}
+  .ring .pct{font-size:clamp(1.4rem, 2.4vw, 2rem); font-weight:800}
+  .ring .desc{color:var(--muted); font-size:clamp(.85rem, 1.2vw, .95rem)}
 
   /* pace tag */
   .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; font-weight:700; font-size:.85rem; border:1px solid transparent}
@@ -78,17 +108,13 @@
   .ontime{background:#0b173c; color:#d3e2ff; border-color:#3b82f6}
   .behind{background:#3f0b0b; color:#ffd4d4; border-color:#f87171}
 
-  .span-4{grid-column:span 4} .span-5{grid-column:span 5} .span-6{grid-column:span 6}
-  .span-7{grid-column:span 7} .span-8{grid-column:span 8} .span-12{grid-column:span 12}
-  @media (max-width:1000px){
-    .span-8,.span-7,.span-6,.span-5{grid-column:span 12} .span-4{grid-column:span 6}
-  }
-  @media (max-width:640px){ .span-4{grid-column:span 12} }
-
   .pop{animation:pop .25s ease}
   @keyframes pop{0%{transform:scale(.9); opacity:.8}100%{transform:scale(1); opacity:1}}
 
   #confetti{position:fixed; inset:0; pointer-events:none}
+
+  /* Keep times on one line so "AM/PM" doesn't drop */
+  #etaPlan, #etaCurrent { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -99,7 +125,7 @@
     <header>
       <div>
         <h1>Task Pace Tracker</h1>
-        <div class="sub">Fixed day: <b>08:00 → 17:00</b> (9h). Cadence: <b>15 min / task</b>. No excuses.</div>
+        <div class="sub">Fixed day: <b>08:00 → 17:00</b> (9h). Cadence: <b>15 min / task</b>.</div>
       </div>
       <div class="row">
         <button class="btn ghost" id="resetBtn" title="Reset all">Reset</button>
@@ -108,7 +134,6 @@
     </header>
 
     <div class="grid">
-      <!-- Config -->
       <section class="card span-7">
         <h3>Plan</h3>
         <div class="row">
@@ -139,12 +164,10 @@
         </div>
       </section>
 
-      <!-- Progress Ring -->
       <section class="card span-5">
         <div class="ring" aria-label="progress">
-          <svg width="220" height="220">
+          <svg viewBox="0 0 220 220" preserveAspectRatio="xMidYMid meet">
             <circle cx="110" cy="110" r="94" stroke="var(--ringTrack)" stroke-width="20" fill="none"/>
-            <!-- stroke changes color by pace -->
             <circle id="ring" cx="110" cy="110" r="94" stroke="var(--warn)" stroke-width="20" stroke-linecap="round" fill="none"
                     stroke-dasharray="590" stroke-dashoffset="590"/>
           </svg>
@@ -155,7 +178,6 @@
         </div>
       </section>
 
-      <!-- Controls -->
       <section class="card span-7">
         <h3>Controls</h3>
         <div class="row">
@@ -172,7 +194,6 @@
         </div>
       </section>
 
-      <!-- Stats -->
       <section class="card span-5">
         <h3>Snapshot</h3>
         <div class="stat">
@@ -180,9 +201,7 @@
             <div class="muted">Tasks to go</div>
             <div class="big" id="toGo">36</div>
           </div>
-          <div class="pill ontime" id="paceTag">
-            Pace: On time
-          </div>
+          <div class="pill ontime" id="paceTag">Pace: On time</div>
         </div>
 
         <div class="stat">
@@ -196,7 +215,7 @@
           <div>
             <div class="muted">
               Ahead / Behind
-              <span class="info">ⓘ<span class="tip">Compare elapsed vs target</span></span>
+              <span class="info">ⓘ<span class="tip">Elapsed vs target (positive phrasing)</span></span>
             </div>
             <div class="big" id="aheadBehind">On time</div>
           </div>
@@ -213,7 +232,7 @@
           <div>
             <div class="muted">
               Over/Under used (Δ)
-              <span class="info">ⓘ<span class="tip">Positive = overused time</span></span>
+              <span class="info">ⓘ<span class="tip">Δ = Elapsed − Target (positive = over)</span></span>
             </div>
             <div class="big" id="overUnder">±00:00</div>
           </div>
@@ -230,14 +249,13 @@
           <div>
             <div class="muted">
               ETA (current pace)
-              <span class="info">ⓘ<span class="tip">Uses your actual avg time/task</span></span>
+              <span class="info">ⓘ<span class="tip">Uses your actual avg/task</span></span>
             </div>
             <div class="big" id="etaCurrent">—</div>
           </div>
         </div>
       </section>
 
-      <!-- Laps -->
       <section class="card span-12">
         <h3>Laps / Notes</h3>
         <div class="row">
@@ -254,74 +272,26 @@
 
 <script>
 (function(){
-  // --- State ---
-  const state = {
-    hours: 9,
-    mpt: 15,
-    totalTasks: 36,
-    done: 0,
-    elapsedSec: 0,
-    running: false,
-    lastTick: null,
-    startTime: "08:00",
-    laps: []
-  };
+  const state = { hours:9, mpt:15, totalTasks:36, done:0, elapsedSec:0, running:false, lastTick:null, startTime:"08:00", laps:[] };
 
-  // --- Elements ---
   const el = {
-    hours: q('#hours'),
-    mpt: q('#mpt'),
-    totalTasks: q('#totalTasks'),
-    totalMin: q('#totalMin'),
-    startTime: q('#startTime'),
-    endTime: q('#endTime'),
-    recalcBtn: q('#recalcBtn'),
-
-    ring: q('#ring'),
-    pct: q('#pct'),
-    done: q('#done'),
-    goal: q('#goal'),
-
-    minusBtn: q('#minusBtn'),
-    plusBtn: q('#plusBtn'),
-    addCustomBtn: q('#addCustomBtn'),
-    addCustom: q('#addCustom'),
-    startStopBtn: q('#startStopBtn'),
-    lapBtn: q('#lapBtn'),
-
-    elapsed: q('#elapsed'),
-    toGo: q('#toGo'),
-    targetTime: q('#targetTime'),
-    aheadBehind: q('#aheadBehind'),
-    shouldUsed: q('#shouldUsed'),
-    overUnder: q('#overUnder'),
-    paceTag: q('#paceTag'),
-    etaPlan: q('#etaPlan'),
-    etaCurrent: q('#etaCurrent'),
-
-    note: q('#note'),
-    addNoteBtn: q('#addNoteBtn'),
-    laps: q('#laps'),
-
-    saveBtn: q('#saveBtn'),
-    resetBtn: q('#resetBtn'),
-    confetti: document.getElementById('confetti')
+    hours: q('#hours'), mpt: q('#mpt'), totalTasks: q('#totalTasks'), totalMin: q('#totalMin'),
+    startTime: q('#startTime'), endTime: q('#endTime'), recalcBtn: q('#recalcBtn'),
+    ring: q('#ring'), pct: q('#pct'), done: q('#done'), goal: q('#goal'),
+    minusBtn: q('#minusBtn'), plusBtn: q('#plusBtn'), addCustomBtn: q('#addCustomBtn'), addCustom: q('#addCustom'),
+    startStopBtn: q('#startStopBtn'), lapBtn: q('#lapBtn'),
+    elapsed: q('#elapsed'), toGo: q('#toGo'), targetTime: q('#targetTime'), aheadBehind: q('#aheadBehind'),
+    shouldUsed: q('#shouldUsed'), overUnder: q('#overUnder'), paceTag: q('#paceTag'), etaPlan: q('#etaPlan'), etaCurrent: q('#etaCurrent'),
+    note: q('#note'), addNoteBtn: q('#addNoteBtn'), laps: q('#laps'),
+    saveBtn: q('#saveBtn'), resetBtn: q('#resetBtn'), confetti: document.getElementById('confetti')
   };
 
   function q(s){return document.querySelector(s)}
   const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
   const pad=n=>String(n).padStart(2,'0');
   const fmtHM = m => `${pad(Math.floor(m/60))}:${pad(Math.floor(m%60))}`;
-  const fmtHMS = s =>{
-    s=Math.floor(s);
-    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), ss = Math.floor(s%60);
-    return `${pad(h)}:${pad(m)}:${pad(ss)}`;
-  }
-  const parseHMS = str =>{
-    const m = /^(\d{1,2}):([0-5]\d):([0-5]\d)$/.exec(str?.trim()||"");
-    if(!m) return null;
-    return (+m[1])*3600 + (+m[2])*60 + (+m[3]);
-  }
+  const fmtHMS = s => { s=Math.floor(s); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=Math.floor(s%60); return `${pad(h)}:${pad(m)}:${pad(ss)}`; }
+  const parseHMS = str => { const m=/^(\d{1,2}):([0-5]\d):([0-5]\d)$/.exec(str?.trim()||""); return m?((+m[1])*3600+(+m[2])*60+(+m[3])):null; }
 
   // Confetti
   const ctx = el.confetti.getContext('2d');
@@ -329,41 +299,21 @@
   addEventListener('resize', sizeCanvas); sizeCanvas();
   function confetti(){
     const W=el.confetti.width,H=el.confetti.height;
-    const bits=Array.from({length:180}).map(()=>({
-      x: Math.random()*W, y: -20-Math.random()*H*.2, vx:(Math.random()-.5)*3, vy:2+Math.random()*3,
-      w: 6+Math.random()*6, h:12+Math.random()*16, r:Math.random()*360, vr:(Math.random()-.5)*8,
-      c: Math.random()>.5?'#34d399':'#3b82f6'
-    }));
-    let t=0, id;
-    (function tick(){
-      id=requestAnimationFrame(tick); t++;
-      ctx.clearRect(0,0,W,H);
-      for(const p of bits){
-        p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
-        ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180);
-        ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
-      }
-      if(t>300){ cancelAnimationFrame(id); ctx.clearRect(0,0,W,H); }
-    })();
+    const bits=Array.from({length:180}).map(()=>({x:Math.random()*W,y:-20-Math.random()*H*.2,vx:(Math.random()-.5)*3,vy:2+Math.random()*3,w:6+Math.random()*6,h:12+Math.random()*16,r:Math.random()*360,vr:(Math.random()-.5)*8,c:Math.random()>.5?'#34d399':'#3b82f6'}));
+    let t=0,id;(function tick(){id=requestAnimationFrame(tick);t++;ctx.clearRect(0,0,W,H);for(const p of bits){p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();}if(t>300){cancelAnimationFrame(id);ctx.clearRect(0,0,W,H);} })();
   }
 
-  // Recalc totals and end time
   function recalcTotals(fromUser=false){
     state.hours = clamp(+el.hours.value || 9, 0.25, 24);
-    state.mpt = clamp(Math.round(+el.mpt.value || 15), 1, 240);
+    state.mpt   = clamp(Math.round(+el.mpt.value || 15), 1, 240);
     const totalMinutes = Math.round(state.hours*60);
     el.totalMin.textContent = totalMinutes;
 
-    if(!fromUser){
-      state.totalTasks = Math.max(1, Math.floor(totalMinutes / state.mpt));
-      el.totalTasks.value = state.totalTasks;
-    }else{
-      state.totalTasks = Math.max(1, Math.floor(+el.totalTasks.value || 1));
-    }
+    if(!fromUser){ state.totalTasks = Math.max(1, Math.floor(totalMinutes / state.mpt)); el.totalTasks.value = state.totalTasks; }
+    else { state.totalTasks = Math.max(1, Math.floor(+el.totalTasks.value || 1)); }
     el.goal.textContent = state.totalTasks;
 
-    // End time from start + hours
-    const [sh,sm] = (state.startTime||"08:00").split(':').map(n=>+n);
+    const [sh,sm] = (state.startTime||"08:00").split(':').map(Number);
     const start = new Date(); start.setHours(sh,sm,0,0);
     const end = new Date(start.getTime() + totalMinutes*60000);
     el.endTime.value = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
@@ -371,7 +321,6 @@
     updateUI();
   }
 
-  // Progress ring & color by pace
   function updateRing(){
     const circumference = 2*Math.PI*94;
     const pct = clamp(state.done/state.totalTasks,0,1);
@@ -385,8 +334,6 @@
   }
 
   function paceClassAndColor(){
-    // ahead (green) if avg per-task <= 95% of plan
-    // on time (blue) if within ±5%; else behind (red)
     const plan = state.mpt*60;
     const actual = state.done>0 ? state.elapsedSec/state.done : plan;
     const ratio = actual/plan;
@@ -396,38 +343,29 @@
   }
 
   function updateTimeDerived(){
-    const targetForCompletedMin = state.done * state.mpt;
-    const targetForCompletedSec = targetForCompletedMin * 60;
+    const targetMin = state.done * state.mpt;
+    const targetSec = targetMin * 60;
     const elapsed = Math.floor(state.elapsedSec);
 
-    // Target, Should Used
-    el.targetTime.textContent = fmtHM(targetForCompletedMin);
-    el.shouldUsed.textContent = fmtHM(targetForCompletedMin);
+    el.targetTime.textContent = fmtHM(targetMin);
+    el.shouldUsed.textContent = fmtHM(targetMin);
 
-    // Over/Under (Δ = elapsed - target)
-    const deltaSec = elapsed - targetForCompletedSec;
+    const deltaSec = elapsed - targetSec;
     const absMin = Math.round(Math.abs(deltaSec)/60);
     const sign = deltaSec===0 ? '±' : (deltaSec>0?'+':'−');
     el.overUnder.textContent = `${sign}${fmtHM(absMin)}`;
 
-    // Ahead / Behind display (positive phrasing)
-    if(deltaSec < -60){ // ahead by more than a minute
-      el.aheadBehind.textContent = `Ahead by ${fmtHM(Math.round((-deltaSec)/60))}`;
-    } else if(deltaSec > 60){
-      el.aheadBehind.textContent = `Behind by ${fmtHM(Math.round((deltaSec)/60))}`;
-    } else {
-      el.aheadBehind.textContent = 'On time';
-    }
+    if(deltaSec < -60){ el.aheadBehind.textContent = `Ahead by ${fmtHM(Math.round((-deltaSec)/60))}`; }
+    else if(deltaSec > 60){ el.aheadBehind.textContent = `Behind by ${fmtHM(Math.round((deltaSec)/60))}`; }
+    else { el.aheadBehind.textContent = 'On time'; }
 
-    // ETAs
     const now = new Date();
-    const remainingTasks = Math.max(0, state.totalTasks - state.done);
-
-    const etaPlanMs = remainingTasks * state.mpt * 60 * 1000 + now.getTime();
+    const remaining = Math.max(0, state.totalTasks - state.done);
+    const etaPlanMs = remaining * state.mpt * 60 * 1000 + now.getTime();
     el.etaPlan.textContent = state.done>=state.totalTasks ? 'Done' : new Date(etaPlanMs).toLocaleTimeString();
 
     const perTaskCurrentSec = Math.max(1, state.done>0 ? (elapsed/state.done) : state.mpt*60);
-    const etaCurrentMs = remainingTasks * perTaskCurrentSec * 1000 + now.getTime();
+    const etaCurrentMs = remaining * perTaskCurrentSec * 1000 + now.getTime();
     el.etaCurrent.textContent = state.done>=state.totalTasks ? 'Done' : new Date(etaCurrentMs).toLocaleTimeString();
   }
 
@@ -435,7 +373,7 @@
     const {cls,color,label} = paceClassAndColor();
     el.paceTag.className = `pill ${cls}`;
     el.paceTag.textContent = label;
-    el.ring.style.stroke = color; // ring color = pace color
+    el.ring.style.stroke = color;
   }
 
   function updateUI(){
@@ -449,11 +387,9 @@
     updateTimeDerived();
     applyPaceStyling();
 
-    // finish effect
     if(state.done>=state.totalTasks) confetti();
   }
 
-  // Timer
   function tick(){
     if(!state.running) return;
     const now = performance.now();
@@ -472,7 +408,6 @@
   function startTimer(){ if(state.running) return; state.running=true; state.lastTick=performance.now(); el.startStopBtn.textContent='Pause Timer'; tick(); }
   function stopTimer(){ state.running=false; state.lastTick=null; el.startStopBtn.textContent='Start Timer'; }
 
-  // Laps
   function addLap(note){
     state.laps.unshift({ts:new Date().toLocaleString(), tasks: state.done, elapsed: fmtHMS(state.elapsedSec), note:escapeHtml(note||'')});
     renderLaps();
@@ -481,7 +416,7 @@
   function renderLaps(){
     if(state.laps.length===0){ el.laps.textContent='No laps yet.'; return; }
     el.laps.innerHTML = state.laps.map(l=>`
-      <div style="display:flex; gap:10px; align-items:baseline; border-bottom:1px dashed #2a2f57; padding:6px 0">
+      <div style="display:flex; gap:10px; align-items:baseline; border-bottom:1px dashed #2a2f57; padding:6px 0; flex-wrap:wrap">
         <div style="min-width:160px; color:#aab4e8">${l.ts}</div>
         <div style="min-width:90px">Tasks: <b>${l.tasks}</b></div>
         <div style="min-width:110px">Elapsed: <b>${l.elapsed}</b></div>
@@ -491,72 +426,47 @@
   }
   const escapeHtml = s=>s.replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
 
-  // Save/Load
-  function save(){
-    const data = { ...state, elapsedSec: Math.floor(state.elapsedSec) };
-    localStorage.setItem('taskPaceTracker', JSON.stringify(data));
-  }
+  function save(){ const data={...state, elapsedSec:Math.floor(state.elapsedSec)}; localStorage.setItem('taskPaceTracker', JSON.stringify(data)); }
   function load(){
     const raw = localStorage.getItem('taskPaceTracker'); if(!raw) return;
     try{
       Object.assign(state, JSON.parse(raw));
-      el.hours.value = state.hours;
-      el.mpt.value = state.mpt;
-      el.totalTasks.value = state.totalTasks;
-      el.startTime.value = state.startTime || '08:00';
-      updateEndFromStart();
-      updateUI(); renderLaps();
+      el.hours.value=state.hours; el.mpt.value=state.mpt; el.totalTasks.value=state.totalTasks; el.startTime.value=state.startTime||'08:00';
+      updateEndFromStart(); updateUI(); renderLaps();
     }catch(e){ console.warn('Failed to load state', e); }
   }
 
-  // Inputs & events
   el.recalcBtn.addEventListener('click', ()=>recalcTotals(false));
   el.hours.addEventListener('change', ()=>recalcTotals(false));
   el.mpt.addEventListener('change', ()=>recalcTotals(false));
   el.totalTasks.addEventListener('change', ()=>recalcTotals(true));
 
-  function updateEndFromStart(){
-    state.startTime = el.startTime.value || '08:00';
-    recalcTotals(true); // recompute end time but keep totalTasks if user set it
-  }
+  function updateEndFromStart(){ state.startTime = el.startTime.value || '08:00'; recalcTotals(true); }
   el.startTime.addEventListener('change', updateEndFromStart);
 
   el.plusBtn.addEventListener('click', ()=>{ state.done=clamp(state.done+1,0,999999); updateUI(); });
   el.minusBtn.addEventListener('click', ()=>{ state.done=clamp(state.done-1,0,999999); updateUI(); });
-  el.addCustomBtn.addEventListener('click', ()=>{
-    const n = clamp(Math.floor(+el.addCustom.value||0), 1, 100000);
-    state.done=clamp(state.done+n,0,999999); updateUI();
-  });
+  el.addCustomBtn.addEventListener('click', ()=>{ const n=clamp(Math.floor(+el.addCustom.value||0),1,100000); state.done=clamp(state.done+n,0,999999); updateUI(); });
 
   el.startStopBtn.addEventListener('click', ()=> state.running ? stopTimer() : startTimer());
   el.lapBtn.addEventListener('click', ()=> addLap(`Lap at ${state.done} tasks`));
 
-  el.elapsed.addEventListener('click', ()=>{
-    const v = prompt("Set elapsed time (HH:MM:SS):", fmtHMS(state.elapsedSec));
-    const s = parseHMS(v); if(s!=null){ state.elapsedSec=s; updateUI(); }
-  });
-
+  el.elapsed.addEventListener('click', ()=>{ const v=prompt("Set elapsed time (HH:MM:SS):", fmtHMS(state.elapsedSec)); const s=parseHMS(v); if(s!=null){ state.elapsedSec=s; updateUI(); } });
   el.addNoteBtn.addEventListener('click', ()=>{ addLap(el.note.value.trim()); el.note.value=''; });
 
   el.saveBtn.addEventListener('click', ()=>{ save(); el.saveBtn.textContent='Saved'; setTimeout(()=>el.saveBtn.textContent='Save', 900); });
-  el.resetBtn.addEventListener('click', ()=>{
-    if(!confirm('Reset everything?')) return;
-    stopTimer();
-    Object.assign(state,{hours:9,mpt:15,totalTasks:36,done:0,elapsedSec:0,laps:[],startTime:'08:00'});
+  el.resetBtn.addEventListener('click', ()=>{ if(!confirm('Reset everything?')) return;
+    stopTimer(); Object.assign(state,{hours:9,mpt:15,totalTasks:36,done:0,elapsedSec:0,laps:[],startTime:'08:00'});
     el.hours.value=9; el.mpt.value=15; el.totalTasks.value=36; el.startTime.value='08:00';
-    localStorage.removeItem('taskPaceTracker');
-    recalcTotals(false); // sets end time, totals, UI
+    localStorage.removeItem('taskPaceTracker'); recalcTotals(false);
   });
 
-  // Kickoff
   function init(){
-    // set default end time for 9h day starting 08:00
     const start = new Date(); start.setHours(8,0,0,0);
     const end = new Date(start.getTime()+9*60*60000);
     el.endTime.value = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
     el.totalMin.textContent = 9*60;
-    load();           // may override defaults
-    recalcTotals(false);
+    load(); recalcTotals(false);
   }
   init();
 })();
